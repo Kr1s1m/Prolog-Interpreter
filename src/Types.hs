@@ -11,7 +11,11 @@ newtype Atom = Atom Comp deriving (Eq, Show)
 
 data Clause = Fact Atom | Rule Atom [Atom] deriving (Eq, Show)
 
+type Program = [Clause]
+
 newtype Query = Query Term deriving (Eq, Show)
+
+type Goal = [Query]
 
 
 
