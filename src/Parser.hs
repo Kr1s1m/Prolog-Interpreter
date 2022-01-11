@@ -1,9 +1,11 @@
 module Parser where
-import Control.Monad
+import Control.Monad(void)
 import Control.Applicative (Alternative((<|>), empty, many, some))
-import Data.Char(isAsciiLower, isAsciiUpper, isDigit)
+import Data.Char(isAsciiLower, isAsciiUpper, isDigit, isSpace)
+import Text.Parsec(try)
 
 import Types
+
 
 newtype Parser a = Parser { runParser :: String -> Maybe (a, String) }
 
@@ -56,7 +58,7 @@ chars cs = charPred (`elem` cs)
 wild :: Parser ()
 wild = void getC
 
-numeric :: Parser Char 
+numeric :: Parser Char
 numeric = charPred isDigit
 
 lowerCase :: Parser Char
@@ -68,23 +70,58 @@ upperCase = charPred isAsciiUpper
 alphabetic :: Parser Char
 alphabetic = lowerCase <|> upperCase
 
-alphanumeric :: Parser Char 
+alphanumeric :: Parser Char
 alphanumeric = alphabetic <|> numeric
 
-ident :: Parser Ident
-ident = do
+whitespace :: Parser String
+whitespace = many $ charPred isSpace
+
+strip :: Parser a -> Parser a
+strip p = do
+    whitespace
+    p
+
+sepBy :: Parser a -> Parser b -> Parser [a]
+sepBy p sep = do
+    a <- p
+    as <- many $ do {sep; p}
+    return (a:as)
+
+arguments' :: Parser a -> Parser [a]
+arguments' p = p `sepBy` strip (char ',')
+
+arguments :: Parser a -> Parser [a]
+arguments p = arguments' p <|> return []
+
+ident' :: Parser Ident
+ident' = do
     c  <- lowerCase
     cs <- many alphanumeric
     return $ Ident (c:cs)
 
-    
-var :: Parser Var 
+ident :: Parser Term
+ident = do
+    c  <- lowerCase
+    cs <- many alphanumeric
+    return $ TIdent (Ident (c:cs))
+
+
+var :: Parser Term
 var = do
     c  <- upperCase <|> char '_'
     cs <- many alphanumeric
-    return $ Var (c:cs)
+    return $ TVar (Var (c:cs))
 
+comp :: Parser Term
+comp = do
+    id <- strip ident'
+    char '('
+    args <- arguments' $ strip term
+    strip $ char ')'
+    return $ TComp (Comp id args)
 
+term :: Parser Term
+term = comp <|> ident <|> var
 
 parse :: Parser a -> String -> Maybe (a, String)
 parse = runParser
