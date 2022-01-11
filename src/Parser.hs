@@ -101,27 +101,62 @@ ident' = do
 
 ident :: Parser Term
 ident = do
-    c  <- lowerCase
-    cs <- many alphanumeric
-    return $ TIdent (Ident (c:cs))
+    TIdent <$> ident'
 
+
+var' :: Parser Var
+var' = do
+    c  <- upperCase <|> char '_'
+    cs <- many alphanumeric
+    return $ Var (c:cs)
 
 var :: Parser Term
 var = do
-    c  <- upperCase <|> char '_'
-    cs <- many alphanumeric
-    return $ TVar (Var (c:cs))
+    TVar <$> var'
+
+
+comp' :: Parser Comp
+comp' = do   
+    id <- strip ident'
+    char '('
+    args <- arguments $ strip term
+    strip $ char ')'
+    return $ Comp id args
 
 comp :: Parser Term
 comp = do
-    id <- strip ident'
-    char '('
-    args <- arguments' $ strip term
-    strip $ char ')'
-    return $ TComp (Comp id args)
+    TComp <$> comp'
 
 term :: Parser Term
 term = comp <|> ident <|> var
+
+atom :: Parser Atom
+atom = do
+    Atom <$> comp'
+
+fact :: Parser Clause
+fact = do
+    a <- atom
+    strip $ char '.'
+    return $ Fact a
+
+rule :: Parser Clause
+rule = do
+    head <- atom
+    strip $ char ':'
+    char '-'
+    body <- arguments $ strip atom
+    strip $ char '.'
+    return $ Rule head body
+
+clause :: Parser Clause 
+clause = fact <|> rule
+
+program :: Parser Program
+program = do
+    cls <- many clause
+    whitespace
+    return cls
 
 parse :: Parser a -> String -> Maybe (a, String)
 parse = runParser
