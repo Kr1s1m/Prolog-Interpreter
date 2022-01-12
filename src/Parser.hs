@@ -2,7 +2,6 @@ module Parser where
 import Control.Monad(void)
 import Control.Applicative (Alternative((<|>), empty, many, some))
 import Data.Char(isAsciiLower, isAsciiUpper, isDigit, isSpace)
-import Text.Parsec(try)
 
 import Types
 
@@ -24,7 +23,7 @@ instance Monad Parser where
 
 instance Alternative Parser where
     empty = reject
-    p <|> q = Parser $ \s -> parse p s <|> parse q s
+    p <|> q = Parser $ \s -> runParser p s <|> runParser q s
 
 
 reject :: Parser a
@@ -76,9 +75,12 @@ alphanumeric = alphabetic <|> numeric
 whitespace :: Parser String
 whitespace = many $ charPred isSpace
 
+newline :: Parser String
+newline = many $ charPred (== '\n')
+
 strip :: Parser a -> Parser a
 strip p = do
-    whitespace
+    whitespace <|> newline
     p
 
 sepBy :: Parser a -> Parser b -> Parser [a]
@@ -116,7 +118,7 @@ var = do
 
 
 comp' :: Parser Comp
-comp' = do   
+comp' = do
     id <- strip ident'
     char '('
     args <- arguments $ strip term
@@ -149,14 +151,23 @@ rule = do
     strip $ char '.'
     return $ Rule head body
 
-clause :: Parser Clause 
+clause :: Parser Clause
 clause = fact <|> rule
 
 program :: Parser Program
 program = do
     cls <- many clause
-    whitespace
+    whitespace <|> newline
     return cls
 
-parse :: Parser a -> String -> Maybe (a, String)
-parse = runParser
+parse' :: Parser a -> String -> Maybe (a, String)
+parse' = runParser
+
+
+parseCheck :: Maybe (a, String) -> Maybe (a, String)
+parseCheck (Just (a, "")) = Just (a, "")
+parseCheck _ = Nothing
+
+parse :: String -> Maybe (Program, String)
+parse s = parseCheck parseResult
+    where parseResult = parse' program s
