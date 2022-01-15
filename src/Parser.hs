@@ -1,9 +1,20 @@
 module Parser where
-import Control.Monad(void)
+
 import Control.Applicative (Alternative((<|>), empty, many, some))
 import Data.Char(isAsciiLower, isAsciiUpper, isDigit, isSpace)
 
 import Types
+    ( KnowledgeBase,
+      Program,
+      Clause(Fact, Rule, head),
+      Term(Comp, Const, Var, funct),
+      Funct(Funct),
+      VarName,
+      Ident 
+    )
+
+import Data.Map as Map (empty, insertWith)
+
 
 
 newtype Parser a = Parser { runParser :: String -> Maybe (a, String) }
@@ -44,18 +55,8 @@ charPred pred = do
 char :: Char -> Parser Char
 char c = charPred (== c)
 
-string :: String -> Parser String
-string "" = return ""
-string (c:cs) = do
-    void $ char c
-    void $ string cs
-    return (c:cs)
-
 chars :: [Char] -> Parser Char
 chars cs = charPred (`elem` cs)
-
-wild :: Parser ()
-wild = void getC
 
 numeric :: Parser Char
 numeric = charPred isDigit
@@ -99,55 +100,50 @@ ident' :: Parser Ident
 ident' = do
     c  <- lowerCase
     cs <- many alphanumeric
-    return $ Ident (c:cs)
-
-ident :: Parser Term
-ident = do
-    TIdent <$> ident'
+    return (c:cs)
 
 
-var' :: Parser Var
-var' = do
+varname :: Parser VarName
+varname = do
     c  <- upperCase <|> char '_'
     cs <- many alphanumeric
-    return $ Var (c:cs)
+    return (c:cs)
+
+
+const' :: Parser Term
+const' = do
+    Const <$> ident'
 
 var :: Parser Term
 var = do
-    TVar <$> var'
+    Var <$> varname
 
 
-comp' :: Parser Comp
-comp' = do
+comp :: Parser Term
+comp = do
     id <- strip ident'
     char '('
     args <- arguments $ strip term
     strip $ char ')'
-    return $ Comp id args
+    return $ Comp (Funct id (length args)) args
 
-comp :: Parser Term
-comp = do
-    TComp <$> comp'
 
 term :: Parser Term
-term = comp <|> ident <|> var
+term = comp <|> const' <|> var
 
-atom :: Parser Atom
-atom = do
-    Atom <$> comp'
 
 fact :: Parser Clause
 fact = do
-    a <- atom
+    a <- comp
     strip $ char '.'
     return $ Fact a
 
 rule :: Parser Clause
 rule = do
-    head <- atom
+    head <- comp
     strip $ char ':'
     char '-'
-    body <- arguments $ strip atom
+    body <- arguments comp
     strip $ char '.'
     return $ Rule head body
 
@@ -164,10 +160,25 @@ parse' :: Parser a -> String -> Maybe (a, String)
 parse' = runParser
 
 
-parseCheck :: Maybe (a, String) -> Maybe (a, String)
-parseCheck (Just (a, "")) = Just (a, "")
+parseCheck :: Maybe (a, String) -> Maybe a
+parseCheck (Just (a, "")) = Just a
 parseCheck _ = Nothing
 
-parse :: String -> Maybe (Program, String)
+parse :: String -> Maybe Program
 parse s = parseCheck parseResult
     where parseResult = parse' program s
+
+
+createKnowledgeBase :: Maybe Program -> Maybe KnowledgeBase
+createKnowledgeBase program = case program of
+    Nothing -> Nothing
+    Just prog -> Just $ createKnowledgeBase' prog Map.empty
+
+    where
+        createKnowledgeBase' :: Program -> KnowledgeBase -> KnowledgeBase
+        createKnowledgeBase' prog kbase = case prog of
+            [] -> kbase
+            (cl:cls) -> createKnowledgeBase' cls (addClause cl kbase)
+
+        addClause :: Clause -> KnowledgeBase -> KnowledgeBase
+        addClause cl kbase = Map.insertWith (flip (++)) (funct (Types.head cl)) [cl] kbase
