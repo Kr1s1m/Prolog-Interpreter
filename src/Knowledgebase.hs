@@ -1,5 +1,6 @@
 module Knowledgebase where
-import Types
+    
+import Types( KnowledgeBase, Program, Clause(head), Term(funct), Funct )
 import Data.Map.Lazy as Map (empty, insertWith, lookup)
 import Data.Maybe(fromMaybe)
 
