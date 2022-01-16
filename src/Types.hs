@@ -1,8 +1,7 @@
 module Types where
 
-import Data.Map as Map
+import Data.Map.Lazy as Map
 import Data.List(intercalate)
-
 
 type Ident = String
 type VarName = String
@@ -13,7 +12,7 @@ instance Show Funct where
     show f = ident f
 
 instance Ord Funct where
-    compare (Funct ide ari) (Funct ide' ari') = if ide == ide' then compare ari ari' else compare ide ide'
+    compare (Funct id ari) (Funct id' ari') = if id == id' then compare ari ari' else compare id id'
      
 
 data Term = Const Ident | Var VarName | Comp {funct :: Funct, args :: [Term]} deriving (Eq)
@@ -23,6 +22,8 @@ instance Show Term where
     show (Var varname) = varname
     show (Comp f args) = show f ++ "(" ++ intercalate ", " (Prelude.map show args) ++ ")"
 
+
+type Substitutions = Maybe [(Term, Term)]
 
 data Clause = Fact {head :: Term} | Rule {head :: Term, body :: [Term]} deriving (Eq, Show)
 
