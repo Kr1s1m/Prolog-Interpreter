@@ -10,11 +10,10 @@ import Types
       Term(Comp, Const, Var, funct),
       Funct(Funct),
       VarName,
-      Ident 
+      Ident
     )
 
-import Data.Map as Map (empty, insertWith)
-
+import Data.Map.Lazy as Map (empty, insertWith, lookup)
 
 
 newtype Parser a = Parser { runParser :: String -> Maybe (a, String) }
@@ -36,10 +35,8 @@ instance Alternative Parser where
     empty = reject
     p <|> q = Parser $ \s -> runParser p s <|> runParser q s
 
-
 reject :: Parser a
 reject = Parser $ const Nothing
-
 
 getC :: Parser Char
 getC = Parser getC'
@@ -102,13 +99,11 @@ ident' = do
     cs <- many alphanumeric
     return (c:cs)
 
-
 varname :: Parser VarName
 varname = do
     c  <- upperCase <|> char '_'
     cs <- many alphanumeric
     return (c:cs)
-
 
 const' :: Parser Term
 const' = do
@@ -118,7 +113,6 @@ var :: Parser Term
 var = do
     Var <$> varname
 
-
 comp :: Parser Term
 comp = do
     id <- strip ident'
@@ -127,10 +121,8 @@ comp = do
     strip $ char ')'
     return $ Comp (Funct id (length args)) args
 
-
 term :: Parser Term
 term = comp <|> const' <|> var
-
 
 fact :: Parser Clause
 fact = do
@@ -167,18 +159,3 @@ parseCheck _ = Nothing
 parse :: String -> Maybe Program
 parse s = parseCheck parseResult
     where parseResult = parse' program s
-
-
-createKnowledgeBase :: Maybe Program -> Maybe KnowledgeBase
-createKnowledgeBase program = case program of
-    Nothing -> Nothing
-    Just prog -> Just $ createKnowledgeBase' prog Map.empty
-
-    where
-        createKnowledgeBase' :: Program -> KnowledgeBase -> KnowledgeBase
-        createKnowledgeBase' prog kbase = case prog of
-            [] -> kbase
-            (cl:cls) -> createKnowledgeBase' cls (addClause cl kbase)
-
-        addClause :: Clause -> KnowledgeBase -> KnowledgeBase
-        addClause cl kbase = Map.insertWith (flip (++)) (funct (Types.head cl)) [cl] kbase
