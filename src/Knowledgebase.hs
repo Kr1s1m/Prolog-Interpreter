@@ -1,5 +1,4 @@
 module Knowledgebase where
-
 import Types
 import Data.Map.Lazy as Map (empty, insertWith, lookup)
 import Data.Maybe(fromMaybe)
