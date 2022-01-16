@@ -1,5 +1,6 @@
 module Unification where
-import Types
+
+import Types ( Term(Var, Const, Comp), Substitutions )
 
 import Data.List(zipWith)
 
