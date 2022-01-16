@@ -4,7 +4,7 @@ import Control.Applicative (Alternative((<|>), empty, many, some))
 import Data.Char(isAsciiLower, isAsciiUpper, isDigit, isSpace)
 
 import Types
-    ( KnowledgeBase,
+    ( 
       Program,
       Clause(Fact, Rule, head),
       Term(Comp, Const, Var, funct),
