@@ -1,6 +1,5 @@
 module Types where
 
-import Data.Map.Lazy as Map
 import Data.List(intercalate)
 
 type Ident = String
@@ -12,23 +11,49 @@ instance Show Funct where
     show f = ident f
 
 instance Ord Funct where
-    compare (Funct id ari) (Funct id' ari') = if id == id' then compare ari ari' else compare id id'
-     
+    compare (Funct id ari) (Funct id' ari')
+        | idOrd == EQ = compare ari ari'
+        | otherwise = idOrd
+        where idOrd = compare id id'
 
-data Term = Const Ident | Var VarName | Comp {funct :: Funct, args :: [Term]} deriving (Eq)
+
+data Term = Const Ident | Var (VarName, Int) | Comp {funct :: Funct, args :: [Term]} deriving (Eq)
 
 instance Show Term where
     show (Const ident) = ident
-    show (Var varname) = varname
-    show (Comp f args) = show f ++ "(" ++ intercalate ", " (Prelude.map show args) ++ ")"
+    show (Var (varname, 0)) = varname
+    show (Var (varname, n)) = varname ++ "_" ++ show n
+    show (Comp f args) = show f ++ "(" ++ intercalate ", " (map show args) ++ ")"
 
 
-type Substitutions = Maybe [(Term, Term)]
+data Rule = Rule {rhead :: Term, rbody :: [Term]} deriving (Eq)
 
-data Clause = Fact {head :: Term} | Rule {head :: Term, body :: [Term]} deriving (Eq, Show)
+instance Show Rule where
+    show (Rule head []) = show head ++ "."
+    show (Rule head body) = show head ++ ":-" ++ intercalate "," (map show body) ++ "."
 
-type Program = [Clause]
+type Program = [Rule]
 
-type KnowledgeBase = Map Funct [Clause]
+type Substitution = [(Term, Term)]
 
-type Goal = [Term]
+true :: Substitution
+true = []
+
+showSubstitution :: Substitution -> String
+showSubstitution [] = "true."
+showSubstitution ss = intercalate ", " (map showSubstitution' ss)
+
+showSubstitution' :: (Term, Term) -> String
+showSubstitution' (v@(Var _), t) = show v ++ " = " ++ show t
+showSubstitution' (_, _) = ""
+
+type Goals = [Term]
+
+type Branch = [(Substitution, Goals)]
+
+data Command = Help | NoAction | AddRule Rule | Query [Term] | ShowAllRules | Quit | CmdError deriving(Eq, Show)
+
+
+getGoals :: Command -> [Term]
+getGoals (Query q) = q
+getGoals _ = []
