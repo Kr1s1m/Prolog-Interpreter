@@ -2,18 +2,17 @@ module Parser where
 
 import Control.Applicative (Alternative((<|>), empty, many, some))
 import Data.Char(isAsciiLower, isAsciiUpper, isDigit, isSpace)
+import Data.Maybe ( fromMaybe )
+
 
 import Types
-    ( 
+    ( Funct(Funct),
+      Ident,
       Program,
-      Clause(Fact, Rule, head),
-      Term(Comp, Const, Var, funct),
-      Funct(Funct),
+      Term(Comp, Const, Var),
       VarName,
-      Ident
-    )
-
-import Data.Map.Lazy as Map (empty, insertWith, lookup)
+      Rule(Rule),
+      Command(NoAction, AddRule, Query, ShowAllRules, Help, Quit, CmdError) )
 
 
 newtype Parser a = Parser { runParser :: String -> Maybe (a, String) }
@@ -54,6 +53,13 @@ char c = charPred (== c)
 
 chars :: [Char] -> Parser Char
 chars cs = charPred (`elem` cs)
+
+string :: String -> Parser String
+string "" = return ""
+string (c:cs) = do
+    c' <- char c
+    cs' <- string cs
+    return (c':cs')
 
 numeric :: Parser Char
 numeric = charPred isDigit
@@ -111,7 +117,8 @@ const' = do
 
 var :: Parser Term
 var = do
-    Var <$> varname
+    v <- varname
+    return $ Var (v, 0)
 
 comp :: Parser Term
 comp = do
@@ -124,13 +131,13 @@ comp = do
 term :: Parser Term
 term = comp <|> const' <|> var
 
-fact :: Parser Clause
+fact :: Parser Rule
 fact = do
-    a <- comp
+    head <- comp
     strip $ char '.'
-    return $ Fact a
+    return $ Rule head []
 
-rule :: Parser Clause
+rule :: Parser Rule
 rule = do
     head <- comp
     strip $ char ':'
@@ -139,23 +146,72 @@ rule = do
     strip $ char '.'
     return $ Rule head body
 
-clause :: Parser Clause
+clause :: Parser Rule
 clause = fact <|> rule
 
 program :: Parser Program
 program = do
-    cls <- many clause
+    rules <- many clause
     whitespace <|> newline
-    return cls
+    return rules
 
-parse' :: Parser a -> String -> Maybe (a, String)
-parse' = runParser
+query :: Parser Command
+query = do
+    strip $ char '?' <|> char ':'
+    char '-'
+    goals <- arguments $ strip term
+    strip $ char '.'
+    return $ Query goals
 
+addRule :: Parser Command
+addRule = do
+    AddRule <$> clause
+
+showAllRules :: Parser Command
+showAllRules = do
+    strip $ char '?'
+    char '?'
+    return ShowAllRules
+
+
+quit :: Parser Command 
+quit = do
+    strip $ char ':'
+    char 'q'
+    return Quit
+
+help :: Parser Command
+help = do
+    strip $ char ':'
+    string "help"
+    return Help
+
+        
+noAction :: Parser Command
+noAction = do
+    whitespace <|> newline
+    string ""
+    return NoAction
+
+command' :: Parser Command 
+command' = query <|> addRule <|> showAllRules  <|>  help <|> quit <|> noAction
+
+command :: Parser Command
+command = do
+    cmd <- command'
+    whitespace <|> newline
+    return cmd
+
+
+parse :: Parser a -> String -> Maybe (a, String)
+parse = runParser
 
 parseCheck :: Maybe (a, String) -> Maybe a
 parseCheck (Just (a, "")) = Just a
 parseCheck _ = Nothing
 
-parse :: String -> Maybe Program
-parse s = parseCheck parseResult
-    where parseResult = parse' program s
+parseCommand :: String -> Command
+parseCommand s = fromMaybe CmdError $ parseCheck (parse command s)
+
+parseProgram :: String -> Program
+parseProgram s = fromMaybe [] $ parseCheck (parse program s)
