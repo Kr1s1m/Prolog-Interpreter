@@ -1,5 +1,10 @@
 module Main where
 
+import REPL ( prologREPL )
+
 main :: IO()
 main = do
-    putStrLn "--------  Prolog in Haskell  --------"
+    prologREPL
+    
+
+      
