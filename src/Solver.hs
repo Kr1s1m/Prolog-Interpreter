@@ -8,15 +8,16 @@ import Types
       Goals,
       Rule(Rule),
       Branch,
-      getGoals, showSubstitution )
+      showSubstitution )
 
 import Unification ( unify, applySubstitution )
-import Data.Maybe (maybeToList)
 import Parser ( parseCommand, parseProgram )
 
+import Data.Maybe ( maybeToList )
 
 solve :: Program -> Goals -> [Substitution]
 solve = dfs 1
+
 
 dfs :: Int -> Program -> Goals -> [Substitution]
 dfs _ _ [] = [true]
