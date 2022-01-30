@@ -4,4 +4,4 @@ import REPL ( prologREPL )
 
 main :: IO()
 main = do
-    prologREPL    
+    prologREPL
