@@ -11,7 +11,6 @@ unify t (Var v) = Just [(Var v, t)]
 unify (Comp f1 args1) (Comp f2 args2) = if f1 == f2 then unify' args1 args2 else Nothing
 unify _ _ = Nothing
 
-
 unify' :: [Term] -> [Term] -> Maybe Substitution
 unify' [] [] = Just true
 unify' _ [] = Nothing
