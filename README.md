@@ -4,7 +4,7 @@
 
 Hello!
 
-This is an university project made in Haskell for course Functional programming.
+This is an university project made in Haskell for Functional programming course.
 
 #### Supported:
   * Constants*
