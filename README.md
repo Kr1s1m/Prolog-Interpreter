@@ -38,4 +38,4 @@ Enjoy!
 ### Sources and inspirations for code and approach
 0. Basic Parser module idea:        https://www.youtube.com/watch?v=cdHY9Kqfr-k
 1. Ideas for rest of the modules:   https://github.com/propella/prolog/
-Credit goes to Takashi Yamamia:     https://github.com/propella/
+Credit goes to Takashi Yamamiya:    https://github.com/propella/
