@@ -1,10 +1,5 @@
 module Parser where
 
-import Control.Applicative (Alternative((<|>), empty, many, some))
-import Data.Char(isAsciiLower, isAsciiUpper, isDigit, isSpace)
-import Data.Maybe ( fromMaybe )
-
-
 import Types
     ( Funct(Funct),
       Ident,
@@ -13,6 +8,10 @@ import Types
       VarName,
       Rule(Rule),
       Command(NoAction, AddRule, Query, ShowAllRules, Help, Quit, CmdError) )
+
+import Control.Applicative (Alternative((<|>), empty, many, some))
+import Data.Char(isAsciiLower, isAsciiUpper, isDigit, isSpace)
+import Data.Maybe ( fromMaybe )
 
 
 newtype Parser a = Parser { runParser :: String -> Maybe (a, String) }
@@ -173,7 +172,6 @@ showAllRules = do
     char '?'
     return ShowAllRules
 
-
 quit :: Parser Command 
 quit = do
     strip $ char ':'
@@ -185,8 +183,7 @@ help = do
     strip $ char ':'
     string "help"
     return Help
-
-        
+      
 noAction :: Parser Command
 noAction = do
     whitespace <|> newline
@@ -201,7 +198,6 @@ command = do
     cmd <- command'
     whitespace <|> newline
     return cmd
-
 
 parse :: Parser a -> String -> Maybe (a, String)
 parse = runParser
