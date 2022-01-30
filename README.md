@@ -40,7 +40,7 @@ This is an university project made in Haskell for Functional programming course.
   
     * Adds rule "p(X,Y):-q(X,Z),r(Z,Y)." to knowledge base.
     
-  * *Haskellog> ?- q1(X, Y, Z).
+  * *Haskellog> ?- p(X, Y).
   
     * Make a query. To get more answers enter ";". Enter anything else (for example ".") to stop.
     
