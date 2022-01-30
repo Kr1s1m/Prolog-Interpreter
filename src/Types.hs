@@ -1,6 +1,6 @@
 module Types where
 
-import Data.List(intercalate)
+import Data.List( intercalate )
 
 type Ident = String
 type VarName = String
@@ -34,6 +34,7 @@ instance Show Rule where
 
 type Program = [Rule]
 
+
 type Substitution = [(Term, Term)]
 
 true :: Substitution
@@ -52,8 +53,3 @@ type Goals = [Term]
 type Branch = [(Substitution, Goals)]
 
 data Command = Help | NoAction | AddRule Rule | Query [Term] | ShowAllRules | Quit | CmdError deriving(Eq, Show)
-
-
-getGoals :: Command -> [Term]
-getGoals (Query q) = q
-getGoals _ = []
