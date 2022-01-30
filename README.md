@@ -11,12 +11,12 @@ This is an university project made in Haskell for Functional programming course.
   * Rules and facts**
   * Infinite generation
 
-*Only atom constants are supported. Lists, numbers and aritmetic operations and not yet implemented.
+*Only atom constants are supported. Lists, numbers and aritmetic operations and not yet suppoted.
 
 **Rules only support logical AND via "," in their body.
 
 #### How to use:
-  * Load Main module into GHCi and run main function bu typing "main" in *Main> prompt
+  * Load Main module into GHCi and run main function by typing "main" in *Main> prompt
   * Load .pl file with valid Prolog code by entering its full path when prompted
     * You are now inside a Read Evaluate Print Loop (REPL) made for this version of Prolog.
     * The prompt of this REPL is *Haskellog>
