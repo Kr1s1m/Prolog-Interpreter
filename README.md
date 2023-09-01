@@ -11,7 +11,7 @@ This is an university project made in Haskell for Functional programming course.
   * Rules and facts**
   * Infinite generation
 
-*Only atom constants are supported. Lists, numbers and aritmetic operations and not yet suppoted.
+*Only atom constants are supported. Lists, numbers and aritmetic operations and not yet implemented.
 
 **Rules only support logical AND via "," in their body.
 
